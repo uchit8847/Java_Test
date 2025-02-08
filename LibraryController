@@ -1,0 +1,63 @@
+package com.library.management.controller;
+
+import com.library.management.model.Book;
+import com.library.management.repository.BookRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/library")
+public class LibraryController {
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    // Display all books
+    @GetMapping("/")
+    public String viewBooks(Model model) {
+        model.addAttribute("books", bookRepository.findAll());
+        return "index";  // Thymeleaf template
+    }
+
+    // Show add book form
+    @GetMapping("/add")
+    public String showAddBookForm() {
+        return "addBook";  // Thymeleaf template
+    }
+
+    // Handle adding a new book
+    @PostMapping("/add")
+    public String addBook(@RequestParam String title, @RequestParam String author, @RequestParam String isbn) {
+        Book book = new Book();
+        book.setTitle(title);
+        book.setAuthor(author);
+        book.setIsbn(isbn);
+        book.setCheckedOut(false);
+        bookRepository.save(book);
+        return "redirect:/library/";  // Redirect to the list of books
+    }
+
+    // Check out a book
+    @PostMapping("/checkout/{isbn}")
+    public String checkOutBook(@PathVariable String isbn) {
+        Book book = bookRepository.findByIsbn(isbn);
+        if (book != null && !book.isCheckedOut()) {
+            book.setCheckedOut(true);
+            bookRepository.save(book);
+        }
+        return "redirect:/library/";
+    }
+
+    // Return a book
+    @PostMapping("/return/{isbn}")
+    public String returnBook(@PathVariable String isbn) {
+        Book book = bookRepository.findByIsbn(isbn);
+        if (book != null && book.isCheckedOut()) {
+            book.setCheckedOut(false);
+            bookRepository.save(book);
+        }
+        return "redirect:/library/";
+    }
+}
